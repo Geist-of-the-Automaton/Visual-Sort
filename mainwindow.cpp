@@ -9,13 +9,11 @@ MainWindow::MainWindow(QWidget *parent) :
     delete ui->mainToolBar;
     for (int i = 0; i < len; ++i)
         arr[i] = i;
-    //setGeometry(0,0, len, len);
     setMaximumHeight(len);
     setMinimumHeight(len);
     setMaximumWidth(len);
     setMinimumWidth(len);
     currSort = 0;
-    nextSort = 0;
     redraw = new QTimer(this);
     connect(redraw, SIGNAL(timeout()), this, SLOT(repaint()));
     redraw->start();
@@ -23,8 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     reset(1);
     connect(sortr, SIGNAL(timeout()), this, SLOT(selectionSort()));
     sortr->start();
-    auto tim = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-    m = tim.count();
+    reset(1);
 }
 
 void MainWindow::frankenSort() {
@@ -39,20 +36,10 @@ void MainWindow::frankenSort() {
         arr[focus] = temp;
     }
     compares += 2;
-    ++cycles;
     ++focus;
     if (focus == len - pos) {
         if (pos + 2 == focus) {
-            auto tim = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-            n = tim.count();
-            if (l > 2*(n - m))
-                l = (n - m);
-            else
-                l = (l + (n - m)) / 2;
-            cout << l << "  " << compares <<  "   " << cycles << endl;
             reset(1);
-            tim = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-            m = tim.count();
         } else {
             ++pos;
             focus = pos + 1;
@@ -62,7 +49,6 @@ void MainWindow::frankenSort() {
 
 void MainWindow::shakerSort() {
     compares += 2;
-    ++cycles;
     if (other < 0) {
         if (arr[focus] < arr[focus - 1]) {
             int temp = arr[focus];
@@ -77,16 +63,7 @@ void MainWindow::shakerSort() {
                 --other;
                 other = -other;
             } else {
-                auto tim = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-                n = tim.count();
-                if (l > 2*(n - m))
-                    l = (n - m);
-                else
-                    l = (l + (n - m)) / 2;
-                cout << l << "  " << compares <<  "   " << cycles << endl;
                 reset(0);
-                tim = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-                m = tim.count();
             }
         }
     }
@@ -105,16 +82,7 @@ void MainWindow::shakerSort() {
                 other = -other;
                 --focus;
             } else {
-                auto tim = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-                n = tim.count();
-                if (l > 2*(n - m))
-                    l = (n - m);
-                else
-                    l = (l + (n - m)) / 2;
-                cout << l << "  " << compares <<  "   " << cycles << endl;
                 reset(0);
-                tim = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-                m = tim.count();
             }
         }
     }
@@ -127,20 +95,38 @@ void MainWindow::selectionSort() {
         arr[focus] = temp;
     }
     ++compares;
-    ++cycles;
     ++focus;
     if (focus == len) {
         if (pos + 2 == focus) {
-            auto tim = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-            n = tim.count();
-            if (l > 2*(n - m))
-                l = (n - m);
-            else
-                l = (l + (n - m)) / 2;
-            cout << l << "  " << compares <<  "   " << cycles << endl;
             reset(1);
-            tim = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-            m = tim.count();
+        } else {
+            ++pos;
+            focus = pos + 1;
+        }
+    }
+}
+
+void MainWindow::doubleSort() {
+    if (arr[pos] > arr[focus]) {
+        int temp = arr[pos];
+        arr[pos] = arr[focus];
+        arr[focus] = temp;
+    }
+    if (arr[len - (pos + 1)] < arr[focus]) {
+        int temp = arr[len - (pos + 1)];
+        arr[len - (pos + 1)] = arr[focus];
+        arr[focus] = temp;
+        if (arr[pos] > arr[focus]) {
+            int temp = arr[pos];
+            arr[pos] = arr[focus];
+            arr[focus] = temp;
+        }
+    }
+    compares += 2;
+    ++focus;
+    if (focus == len - (pos + 1)) {
+        if (pos == (len / 2) - 2) {
+            reset(1);
         } else {
             ++pos;
             focus = pos + 1;
@@ -157,24 +143,33 @@ void MainWindow::bubbleSort() {
     }
     ++focus;
     ++compares;
-    ++cycles;
     if (focus == (len - 1) - other) {
         if (pos) {
             focus = 0;
             pos = 0;
             ++other;
         } else {
-            auto tim = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-            n = tim.count();
-            if (l > 2*(n - m))
-                l = (n - m);
-            else
-                l = (l + (n - m)) / 2;
-            cout << l << "  " << compares <<  "   " << cycles << endl;
             reset(0);
-            tim = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-            m = tim.count();
         }
+    }
+}
+
+void MainWindow::insertSort() {
+    for (int j = pos; j < focus; ++j) {
+        compares += 2;
+        if (arr[focus] < arr[j]) {
+            int temp = arr[focus];
+            for (int i = focus - 1; i >= j; --i) {
+                arr[i + 1] = arr[i];
+                ++compares;
+            }
+            arr[j] = temp;
+            break;
+        }
+    }
+    ++focus;
+    if (focus == len) {
+        reset(1);
     }
 }
 
@@ -182,7 +177,7 @@ void MainWindow::paintEvent(QPaintEvent *event) {
     QImage qi(size(), QImage::Format_ARGB32_Premultiplied);
     for (int i = 0; i < len; ++i)
         for (int y = 0; y < arr[i]; ++y)
-            qi.setPixel(i, (len - y) - 1, i == focus ? 0xFFFF0000 : 0xFF00AA00);
+            qi.setPixel(i, (len - y) - 1, i == focus ? 0xFFFFBB00 : 0xFF009900);
     QPainter qp(this);
     qp.drawImage(0,0, qi);
     QColor color (0, 0, 0);
@@ -194,10 +189,11 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 }
 
 void MainWindow::reset(int f) {
+    cout << compares << endl;
     pos = 0;
     focus = f;
     other = 0;
-    compares = cycles = 0;
+    compares = 0;
     int loc;
     for (int i = 0; i < len; ++i) {
         loc = rand() % len;
@@ -208,31 +204,42 @@ void MainWindow::reset(int f) {
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {
+    int key = event->key();
+    if (key < Qt::Key_1 || key > Qt::Key_6)
+        return;
     sortr->stop();
     delete sortr;
     sortr = new QTimer(this);
-    if (event->key() == Qt::Key_1) {
+    if (key == Qt::Key_1) {
         connect(sortr, SIGNAL(timeout()), this, SLOT(selectionSort()));
         reset(1);
         currSort = 0;
     }
-    else if (event->key() == Qt::Key_2) {
+    else if (key == Qt::Key_2) {
         connect(sortr, SIGNAL(timeout()), this, SLOT(bubbleSort()));
         reset(0);
         currSort = 1;
     }
-    else if (event->key() == Qt::Key_3) {
+    else if (key == Qt::Key_3) {
         connect(sortr, SIGNAL(timeout()), this, SLOT(frankenSort()));
         reset(1);
         currSort = 2;
     }
-    else if (event->key() == Qt::Key_4) {
+    else if (key == Qt::Key_4) {
         connect(sortr, SIGNAL(timeout()), this, SLOT(shakerSort()));
         reset(0);
         currSort = 3;
     }
-    auto tim = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-    m = tim.count();
+    else if (key == Qt::Key_5) {
+        connect(sortr, SIGNAL(timeout()), this, SLOT(doubleSort()));
+        reset(1);
+        currSort = 4;
+    }
+    else if (key == Qt::Key_6) {
+        connect(sortr, SIGNAL(timeout()), this, SLOT(insertSort()));
+        reset(1);
+        currSort = 5;
+    }
     sortr->start();
 }
 
