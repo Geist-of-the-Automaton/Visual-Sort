@@ -17,7 +17,7 @@ using std::endl;
 using namespace std::chrono;
 using std::chrono::milliseconds;
 const int len = 300;
-const string names[] = {"Selection Sort", "Bubble Sort", "Franken Sort", "Shaker Sort"};
+const string names[] = {"Selection Sort", "Bubble Sort", "Franken Sort", "Shaker Sort", "Double Selection Sort", "Insertion Sort"};
 
 
 namespace Ui {
@@ -42,20 +42,18 @@ private:
     QTimer *sortr;
     int arr[len];
     int pos, focus, other;
-    long long l, m, n;
-    int compares, cycles;
+    int compares;
     int currSort;
-    int nextSort;
 
 
 
 public slots:
-    //=================BASED ON 100 LENGTH ARRAYS==============
-    void frankenSort();     //       1.5 sec
-    void selectionSort();   //       2.8 sec
-    void bubbleSort();   //       2.8 sec
-    void shakerSort();      //       2.1 sec
-    //=============DIVIDE BY 60 TO GET NON-GUI TIMES===========
+    void frankenSort();
+    void selectionSort();
+    void bubbleSort();
+    void shakerSort();
+    void doubleSort();
+    void insertSort();
 };
 
 #endif // MAINWINDOW_H
